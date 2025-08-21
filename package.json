@@ -1,0 +1,16 @@
+{
+  "name": "neon-vj-web",
+  "version": "1.0.0",
+  "description": "Real-time setlist sharing for NeoN VJ app",
+  "main": "index.js",
+  "dependencies": {
+    "@octokit/rest": "^19.0.7"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build"
+  },
+  "keywords": ["dj", "setlist", "music", "real-time"],
+  "author": "NeoN VJ",
+  "license": "ISC"
+}
