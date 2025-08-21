@@ -1,5 +1,5 @@
 // Vercel Serverless Function for Adding Songs to Events
-const { Octokit } = require("@octokit/rest");
+const { kv } = require("@vercel/kv");
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -17,69 +17,55 @@ module.exports = async function handler(req, res) {
 
   try {
     const { eventId } = req.query;
-    const { title, artist, djName, shazamId } = req.body;
+    const { title, artist, djName, deviceId } = req.body;
 
     // Validation
-    if (!eventId || !title || !artist || !djName) {
+    if (!eventId || !title || !artist || !deviceId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Initialize Octokit
-    const octokit = new Octokit({
-      auth: process.env.GITHUB_TOKEN,
-    });
+    // Get existing event data
+    const eventData = await kv.get(`event:${eventId}`);
+    
+    if (!eventData) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
 
-    // Get existing file
-    const { data: fileData } = await octokit.rest.repos.getContent({
-      owner: 'hhb001-blueiscolor',
-      repo: 'neon-vj-web',
-      path: `public/data/events/${eventId}.json`,
-    });
+    // Check if event has expired
+    const expiresAt = new Date(eventData.event.expires_at);
+    if (expiresAt < new Date()) {
+      // Clean up expired event
+      await kv.del(`event:${eventId}`);
+      return res.status(404).json({ error: 'Event has expired' });
+    }
 
-    // Parse existing content
-    const existingContent = Buffer.from(fileData.content, 'base64').toString();
-    const eventData = JSON.parse(existingContent);
+    // Verify device ID matches (basic authentication)
+    if (eventData.event.device_id !== deviceId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
 
-    // Add new song
+    // Create new song entry
     const newSong = {
-      id: generateSongId(),
       title: title,
       artist: artist,
-      dj_name: djName,
-      timestamp: new Date().toISOString(),
-      shazam_id: shazamId || ""
+      dj_name: djName || "",
+      timestamp: new Date().toISOString()
     };
 
+    // Add song to event
     eventData.songs.push(newSong);
 
-    // Update file
-    const newContent = Buffer.from(JSON.stringify(eventData, null, 2)).toString('base64');
-    
-    await octokit.rest.repos.createOrUpdateFileContents({
-      owner: 'hhb001-blueiscolor',
-      repo: 'neon-vj-web',
-      path: `public/data/events/${eventId}.json`,
-      message: `Add song: ${title} by ${artist}`,
-      content: newContent,
-      sha: fileData.sha,
-    });
+    // Update event in Vercel KV
+    await kv.set(`event:${eventId}`, eventData);
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      message: 'Song added successfully'
+      song: newSong,
+      totalSongs: eventData.songs.length
     });
 
   } catch (error) {
     console.error('Song addition error:', error);
-    
-    if (error.status === 404) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-    
     res.status(500).json({ error: 'Internal server error' });
   }
-}
-
-function generateSongId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }

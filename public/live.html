@@ -134,7 +134,7 @@
         // Load event data from JSON
         async function loadEventData() {
             try {
-                const response = await fetch(`https://vj.neondjneon.com/data/events/${eventId}.json`);
+                const response = await fetch(`/api/events/${eventId}`);
                 if (!response.ok) throw new Error('Event not found');
                 
                 const data = await response.json();

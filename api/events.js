@@ -1,5 +1,5 @@
 // Vercel Serverless Function for Event Creation
-const { Octokit } = require("@octokit/rest");
+const { kv } = require("@vercel/kv");
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -23,11 +23,6 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Initialize Octokit with environment token
-    const octokit = new Octokit({
-      auth: process.env.GITHUB_TOKEN, // Set in Vercel environment variables
-    });
-
     // Generate event ID
     const eventId = generateEventId();
     
@@ -48,16 +43,8 @@ module.exports = async function handler(req, res) {
       songs: []
     };
 
-    // Create file on GitHub
-    const content = Buffer.from(JSON.stringify(eventData, null, 2)).toString('base64');
-    
-    await octokit.rest.repos.createOrUpdateFileContents({
-      owner: 'hhb001-blueiscolor',
-      repo: 'neon-vj-web',
-      path: `public/data/events/${eventId}.json`,
-      message: `Create new setlist event: ${eventName}`,
-      content: content,
-    });
+    // Store in Vercel KV (no GitHub username exposure)
+    await kv.set(`event:${eventId}`, eventData);
 
     res.status(201).json({
       success: true,
