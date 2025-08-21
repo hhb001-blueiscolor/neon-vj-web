@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoN VJ - Live Setlist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-black/50 backdrop-blur-sm border-b border-gray-800">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    NeoN VJ Live Setlist
+                </h1>
+                <p class="text-gray-400">Real-time music recognition powered by NeoN VJ</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12 max-w-4xl">
+        <div class="text-center space-y-8">
+            <!-- Welcome Message -->
+            <div class="bg-gray-800/50 rounded-lg p-8 backdrop-blur-sm">
+                <h2 class="text-2xl font-semibold mb-4">Welcome to NeoN VJ Live</h2>
+                <p class="text-gray-300 mb-6">
+                    View real-time setlists from live DJ performances.<br>
+                    Powered by professional VJ music recognition technology.
+                </p>
+                
+                <!-- Event URL Input -->
+                <div class="max-w-md mx-auto">
+                    <label for="eventUrl" class="block text-sm font-medium text-gray-400 mb-2">
+                        Enter Event URL or Code
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" 
+                               id="eventUrl" 
+                               placeholder="e.g., abc123xyz or full URL"
+                               class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-purple-400">
+                        <button onclick="goToEvent()" 
+                                class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition">
+                            View
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-gray-800/50 rounded-lg p-6">
+                    <div class="text-purple-400 text-2xl mb-3">🎵</div>
+                    <h3 class="font-semibold mb-2">Real-time Updates</h3>
+                    <p class="text-gray-400 text-sm">Track information updates automatically as DJs play</p>
+                </div>
+                
+                <div class="bg-gray-800/50 rounded-lg p-6">
+                    <div class="text-pink-400 text-2xl mb-3">🎧</div>
+                    <h3 class="font-semibold mb-2">DJ Tracking</h3>
+                    <p class="text-gray-400 text-sm">See which DJ is playing each track</p>
+                </div>
+                
+                <div class="bg-gray-800/50 rounded-lg p-6">
+                    <div class="text-blue-400 text-2xl mb-3">📱</div>
+                    <h3 class="font-semibold mb-2">Mobile Friendly</h3>
+                    <p class="text-gray-400 text-sm">Optimized for all devices and screen sizes</p>
+                </div>
+            </div>
+
+            <!-- Sample Events (for demo) -->
+            <div class="bg-gray-800/50 rounded-lg p-6">
+                <h3 class="font-semibold mb-4">Sample Events</h3>
+                <div class="space-y-2">
+                    <a href="/live/demo" class="block text-purple-400 hover:text-purple-300">
+                        → Demo Event (Sample Data)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-gray-800 bg-black/50">
+        <div class="container mx-auto px-4 py-6 text-center">
+            <p class="text-gray-400 text-sm">
+                © 2025 NeoN VJ by SMYLE
+            </p>
+            <div class="mt-2">
+                <a href="https://neondjneon.com" class="text-gray-500 hover:text-gray-400 text-xs">
+                    Privacy Policy
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function goToEvent() {
+            const input = document.getElementById('eventUrl').value.trim();
+            if (!input) return;
+            
+            // Check if it's a full URL or just an event ID
+            if (input.includes('neondjneon.com/live/')) {
+                window.location.href = input;
+            } else {
+                window.location.href = `/live/${input}`;
+            }
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('eventUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                goToEvent();
+            }
+        });
+    </script>
+</body>
+</html>
