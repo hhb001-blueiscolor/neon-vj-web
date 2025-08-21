@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
     await octokit.rest.repos.createOrUpdateFileContents({
       owner: 'hhb001-blueiscolor',
       repo: 'neon-vj-web',
-      path: `data/events/${eventId}.json`,
+      path: `public/data/events/${eventId}.json`,
       message: `Create new setlist event: ${eventName}`,
       content: content,
     });

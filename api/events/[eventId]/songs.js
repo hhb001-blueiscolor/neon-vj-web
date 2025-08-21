@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
     const { data: fileData } = await octokit.rest.repos.getContent({
       owner: 'hhb001-blueiscolor',
       repo: 'neon-vj-web',
-      path: `data/events/${eventId}.json`,
+      path: `public/data/events/${eventId}.json`,
     });
 
     // Parse existing content
@@ -58,7 +58,7 @@ module.exports = async function handler(req, res) {
     await octokit.rest.repos.createOrUpdateFileContents({
       owner: 'hhb001-blueiscolor',
       repo: 'neon-vj-web',
-      path: `data/events/${eventId}.json`,
+      path: `public/data/events/${eventId}.json`,
       message: `Add song: ${title} by ${artist}`,
       content: newContent,
       sha: fileData.sha,
