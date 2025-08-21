@@ -85,14 +85,14 @@
 
         <!-- Empty State -->
         <div id="emptyState" class="text-center py-12 hidden">
-            <p class="text-gray-400">No songs played yet. Waiting for the first track...</p>
+            <p class="text-gray-400">まだ楽曲が再生されていません。最初の楽曲をお待ちください...</p>
         </div>
 
         <!-- Notice -->
         <div class="mt-8 bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
             <p class="text-yellow-200 text-sm">
-                ⚠️ Some tracks may not appear if recognition was unsuccessful<br>
-                🗓️ This page will be automatically deleted after 30 days
+                ⚠️ 認識に失敗した楽曲は表示されない場合があります<br>
+                🗓️ このページは30日後に自動削除されます
             </p>
         </div>
     </main>
@@ -134,7 +134,7 @@
         // Load event data from JSON
         async function loadEventData() {
             try {
-                const response = await fetch(`/data/events/${eventId}.json`);
+                const response = await fetch(`https://vj.neondjneon.com/data/events/${eventId}.json`);
                 if (!response.ok) throw new Error('Event not found');
                 
                 const data = await response.json();
@@ -145,7 +145,7 @@
             } catch (error) {
                 console.error('Failed to load event data:', error);
                 document.getElementById('loadingState').innerHTML = `
-                    <p class="text-red-400">Event not found or expired</p>
+                    <p class="text-red-400">イベントが見つかりません</p>
                 `;
             }
         }
@@ -226,7 +226,7 @@
             container.innerHTML = '';
             
             // Sort by timestamp (newest first)
-            const sortedSongs = [...songList].reverse();
+            const sortedSongs = [...songList].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             sortedSongs.forEach((song, index) => {
                 const songEl = createSongElement(song, index === 0);
@@ -269,21 +269,11 @@
             const div = document.createElement('div');
             div.className = `bg-gray-800/50 rounded-lg p-4 ${isLatest ? 'border border-purple-500 fade-in' : ''}`;
             
-            const djText = hideDJ ? '' : ` (${song.dj_name})`;
-            const timeStr = new Date(song.timestamp).toLocaleTimeString('ja-JP', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
+            const djText = (hideDJ || !song.dj_name || song.dj_name.trim() === '') ? '' : ` (${song.dj_name})`;
+            const nowTag = isLatest ? '[Now]' : '';
             
             div.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <div class="font-medium">${song.title}${djText}</div>
-                        <div class="text-gray-400 text-sm mt-1">${song.artist}</div>
-                    </div>
-                    <div class="text-gray-500 text-xs">${timeStr}</div>
-                </div>
-                ${isLatest ? '<div class="text-purple-400 text-xs mt-2">🎵 Now Playing</div>' : ''}
+                <div class="font-medium">${nowTag}${song.title} / ${song.artist}${djText}</div>
             `;
             
             return div;
