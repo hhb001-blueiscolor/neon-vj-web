@@ -1,31 +1,23 @@
 // Supabase設定ファイル
-// 環境変数からSupabase接続情報を取得
+// Vercel環境変数問題の回避的解決（直接接続）
 
 const { createClient } = require('@supabase/supabase-js');
 
-// 環境変数の検証
-function validateEnvironmentVariables() {
-    console.log('Environment variables check:', {
-        SUPABASE_URL: !!process.env.SUPABASE_URL,
-        SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
-        NODE_ENV: process.env.NODE_ENV,
-        VERCEL_ENV: process.env.VERCEL_ENV
-    });
-    
-    const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-    const missing = required.filter(key => !process.env[key]);
-    
-    if (missing.length > 0) {
-        throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-    }
-}
+// 直接接続情報（Vercel環境変数が認識されないため）
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rvblfsgpjoypfdfmvmfw.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2Ymxmc2dwam95cGZkZm12bWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4MjU3NzAsImV4cCI6MjA3MTQwMTc3MH0.AsynLa8p16fdq3Kkq_PvqojlvAwtr3g2nRgv-Z5H5OU';
 
 // Supabaseクライアント初期化
 function createSupabaseClient() {
-    validateEnvironmentVariables();
+    // 環境変数が認識されない場合はフォールバックを使用
+    const supabaseUrl = SUPABASE_URL;
+    const supabaseKey = SUPABASE_ANON_KEY;
     
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    console.log('Supabase connection using:', {
+        url: supabaseUrl.substring(0, 30) + '...',
+        keyLength: supabaseKey.length,
+        isFromEnv: !!process.env.SUPABASE_URL
+    });
     
     const supabase = createClient(supabaseUrl, supabaseKey, {
         auth: {
