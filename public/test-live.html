@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Live - TEST001</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-2xl font-bold mb-4">テストイベント: TEST001</h1>
+        
+        <div id="loading" class="text-blue-500">データ読み込み中...</div>
+        <div id="error" class="text-red-500 hidden"></div>
+        
+        <div id="event-info" class="hidden bg-white p-4 rounded mb-4">
+            <h2 class="text-xl font-semibold mb-2">イベント情報</h2>
+            <div id="event-details"></div>
+        </div>
+        
+        <div id="songs-list" class="hidden bg-white p-4 rounded">
+            <h2 class="text-xl font-semibold mb-2">楽曲リスト</h2>
+            <div id="songs"></div>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const eventInfo = document.getElementById('event-info');
+            const songsList = document.getElementById('songs-list');
+            const eventDetails = document.getElementById('event-details');
+            const songs = document.getElementById('songs');
+            
+            try {
+                const response = await fetch('/api/event-test?eventId=TEST001');
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'データ取得エラー');
+                }
+                
+                // イベント情報表示
+                eventDetails.innerHTML = `
+                    <p><strong>イベント名:</strong> ${data.event.name}</p>
+                    <p><strong>ID:</strong> ${data.event.id}</p>
+                    <p><strong>作成日時:</strong> ${new Date(data.event.created_at).toLocaleString('ja-JP')}</p>
+                    <p><strong>有効期限:</strong> ${new Date(data.event.expires_at).toLocaleString('ja-JP')}</p>
+                `;
+                
+                // 楽曲リスト表示
+                if (data.songs && data.songs.length > 0) {
+                    songs.innerHTML = data.songs.map(song => `
+                        <div class="border-b py-2">
+                            <p><strong>${song.title}</strong> / ${song.artist}</p>
+                            <p class="text-sm text-gray-500">DJ: ${song.dj_name || '不明'}</p>
+                            <p class="text-xs text-gray-400">${new Date(song.timestamp).toLocaleString('ja-JP')}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    songs.innerHTML = '<p class="text-gray-500">楽曲がありません</p>';
+                }
+                
+                loading.classList.add('hidden');
+                eventInfo.classList.remove('hidden');
+                songsList.classList.remove('hidden');
+                
+            } catch (err) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                error.textContent = `エラー: ${err.message}`;
+                console.error('Error:', err);
+            }
+        }
+        
+        // ページロード時にデータ取得
+        loadData();
+        
+        // 30秒ごとに更新
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
