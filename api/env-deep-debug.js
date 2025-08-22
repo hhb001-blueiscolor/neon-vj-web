@@ -10,6 +10,18 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+        // 🧪 基本的な検証
+        console.log('All env keys containing SUPA:');
+        console.log(Object.keys(process.env).filter(k => k.toUpperCase().includes('SUPA')));
+
+        console.log('Exact match check:');
+        console.log('SUPABASE_URL' in process.env);
+        console.log('SUPABASE_ANON_KEY' in process.env);
+
+        console.log('Raw values with quotes:');
+        console.log(`URL: "${process.env.SUPABASE_URL}"`);
+        console.log(`KEY: "${process.env.SUPABASE_ANON_KEY}"`);
+        
         // 全環境変数をダンプ
         const allEnvVars = Object.keys(process.env).reduce((acc, key) => {
             // セキュリティ上、値の最初の20文字のみ表示
@@ -67,8 +79,22 @@ module.exports = async function handler(req, res) {
             userAgent: req.headers['user-agent']
         };
 
+        // 🧪 基本検証結果
+        const basicVerification = {
+            supaKeysFound: Object.keys(process.env).filter(k => k.toUpperCase().includes('SUPA')),
+            exactMatchCheck: {
+                SUPABASE_URL: 'SUPABASE_URL' in process.env,
+                SUPABASE_ANON_KEY: 'SUPABASE_ANON_KEY' in process.env
+            },
+            rawValues: {
+                URL: `"${process.env.SUPABASE_URL}"`,
+                KEY: `"${process.env.SUPABASE_ANON_KEY}"`.substring(0, 30) + '...'
+            }
+        };
+        
         res.status(200).json({
             message: '徹底的な環境変数デバッグ結果',
+            basicVerification,
             supabaseAnalysis,
             vercelInfo,
             processInfo,
