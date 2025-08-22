@@ -1,5 +1,10 @@
-// Vercel Serverless Function for Event Creation
-const { kv } = require("@vercel/kv");
+// Supabase Event Creation API with Usage Monitoring
+const { 
+  createSupabaseClient, 
+  incrementUsageCounter, 
+  checkUsageLimit,
+  cleanupExpiredEvents 
+} = require('./supabase-config');
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -15,45 +20,95 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const supabase = createSupabaseClient();
+
   try {
+    // Phase 1: 制限チェック（90%制限での拒否）
+    const apiLimitCheck = await checkUsageLimit(supabase, 'api_calls');
+    const eventLimitCheck = await checkUsageLimit(supabase, 'events_created');
+
+    if (!apiLimitCheck.allowed || !eventLimitCheck.allowed) {
+      return res.status(429).json({ 
+        error: 'Usage limit exceeded',
+        details: {
+          api_calls: apiLimitCheck,
+          events_created: eventLimitCheck
+        }
+      });
+    }
+
+    // 90%警告チェック
+    if (apiLimitCheck.warning_triggered || eventLimitCheck.warning_triggered) {
+      console.warn('Usage approaching limit:', {
+        api_calls: apiLimitCheck,
+        events_created: eventLimitCheck
+      });
+    }
+
+    // Phase 2: リクエスト検証
     const { eventName, eventURL, djDisplayMode, deviceId } = req.body;
 
-    // Validation
     if (!eventName || !deviceId) {
+      await incrementUsageCounter(supabase, 'api_calls');
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Generate event ID
+    // Phase 3: 期限切れイベントクリーンアップ
+    await cleanupExpiredEvents(supabase);
+
+    // Phase 4: イベント作成
     const eventId = generateEventId();
-    
-    // Create event data
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-    
-    const eventData = {
-      event: {
-        id: eventId,
-        name: eventName,
-        event_url: eventURL || "",
-        dj_display_mode: djDisplayMode || "chronological",
-        device_id: deviceId,
-        created_at: now.toISOString(),
-        expires_at: expiresAt.toISOString()
-      },
-      songs: []
-    };
 
-    // Store in Vercel KV (no GitHub username exposure)
-    await kv.set(`event:${eventId}`, eventData);
+    const { data, error } = await supabase
+      .from('events')
+      .insert([
+        {
+          id: eventId,
+          name: eventName,
+          event_url: eventURL || "",
+          dj_display_mode: djDisplayMode || "chronological", 
+          device_id: deviceId,
+          expires_at: expiresAt.toISOString()
+        }
+      ])
+      .select();
 
+    if (error) {
+      console.error('Event creation failed:', error);
+      await incrementUsageCounter(supabase, 'api_calls');
+      return res.status(500).json({ error: 'Event creation failed' });
+    }
+
+    // Phase 5: 使用量カウンター更新
+    await Promise.all([
+      incrementUsageCounter(supabase, 'api_calls'),
+      incrementUsageCounter(supabase, 'events_created')
+    ]);
+
+    // Phase 6: 成功レスポンス
     res.status(201).json({
       success: true,
       eventId: eventId,
-      eventURL: `https://web.neondjneon.com/live.html?event=${eventId}`
+      eventURL: `https://web.neondjneon.com/live.html?event=${eventId}`,
+      event: data[0],
+      usage: {
+        api_calls: apiLimitCheck,
+        events_created: eventLimitCheck
+      }
     });
 
   } catch (error) {
     console.error('Event creation error:', error);
+    
+    // エラー時も使用量カウンター更新
+    try {
+      await incrementUsageCounter(supabase, 'api_calls');
+    } catch (counterError) {
+      console.error('Counter update failed:', counterError);
+    }
+    
     res.status(500).json({ error: 'Internal server error' });
   }
 }
