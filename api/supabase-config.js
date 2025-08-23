@@ -54,8 +54,8 @@ async function incrementUsageCounter(supabase, counterType, incrementBy = 1) {
     }
 }
 
-// 制限チェック関数（完全リニューアル版）
-async function checkUsageLimit(supabase, counterType) {
+// 制限チェック関数（完全リニューアル版 - 2025/01/23修正）
+async function checkUsageLimitNew(supabase, counterType) {
     console.log(`🔍 [NEW_CODE] Checking usage for: ${counterType}`);
     
     try {
@@ -193,10 +193,18 @@ async function getSystemLimits(supabase) {
     }
 }
 
+// 古い関数を完全に置き換え
+async function checkUsageLimit(supabase, counterType) {
+    console.log(`🚨 [OLD_FUNCTION_CALLED] This should not happen: ${counterType}`);
+    // 新しい関数にリダイレクト
+    return await checkUsageLimitNew(supabase, counterType);
+}
+
 module.exports = {
     createSupabaseClient,
     incrementUsageCounter,
     checkUsageLimit,
+    checkUsageLimitNew,
     cleanupExpiredEvents,
     getUsageStats,
     getSystemLimits
