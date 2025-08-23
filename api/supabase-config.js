@@ -62,9 +62,24 @@ async function checkUsageLimit(supabase, counterType) {
         const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
         
         // 今月の使用量を取得
+        let selectField;
+        switch (counterType) {
+            case 'events_created':
+                selectField = 'events_created';
+                break;
+            case 'songs_added':
+                selectField = 'songs_added';
+                break;
+            case 'api_calls':
+                selectField = 'api_calls_count';
+                break;
+            default:
+                selectField = 'events_created';
+        }
+        
         const { data: usageData, error: usageError } = await supabase
             .from('usage_stats')
-            .select(counterType === 'events_created' ? 'events_created' : 'songs_added')
+            .select(selectField)
             .gte('date', `${currentMonth}-01`)
             .lte('date', `${currentMonth}-31`);
             
@@ -77,12 +92,24 @@ async function checkUsageLimit(supabase, counterType) {
         // 合計を計算
         let monthlyUsage = 0;
         if (usageData && usageData.length > 0) {
-            const field = counterType === 'events_created' ? 'events_created' : 'songs_added';
-            monthlyUsage = usageData.reduce((sum, row) => sum + (row[field] || 0), 0);
+            monthlyUsage = usageData.reduce((sum, row) => sum + (row[selectField] || 0), 0);
         }
         
         // 月間制限（6時間イベント×240曲を想定）
-        const monthlyLimit = counterType === 'events_created' ? 500 : 100000;
+        let monthlyLimit;
+        switch (counterType) {
+            case 'events_created':
+                monthlyLimit = 500;
+                break;
+            case 'songs_added':
+                monthlyLimit = 100000;
+                break;
+            case 'api_calls':
+                monthlyLimit = 120000; // API呼び出し全体の制限
+                break;
+            default:
+                monthlyLimit = 500;
+        }
         
         return {
             allowed: monthlyUsage < monthlyLimit,
