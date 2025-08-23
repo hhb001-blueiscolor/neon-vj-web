@@ -22,8 +22,9 @@ module.exports = async function handler(req, res) {
   const supabase = createSupabaseClient();
 
   try {
-    // Phase 1: 制限チェック（月間制限のみ）
+    // Phase 1: 使用制限チェック（根本修正版）
     const songLimitCheck = await checkUsageLimit(supabase, 'songs_added');
+    const apiLimitCheck = await checkUsageLimit(supabase, 'api_calls');
 
     if (!songLimitCheck.allowed) {
       return res.status(429).json({ 

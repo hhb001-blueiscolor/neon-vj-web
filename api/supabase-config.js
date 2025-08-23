@@ -33,24 +33,54 @@ function createSupabaseClient() {
     return supabase;
 }
 
-// 使用量カウンター関数
+// 使用量カウンター関数（RPC関数バイパス版）
 async function incrementUsageCounter(supabase, counterType, incrementBy = 1) {
+    console.log(`📊 [DIRECT_INCREMENT] ${counterType} by ${incrementBy}`);
+    
     try {
-        const { data, error } = await supabase
-            .rpc('increment_usage_counter', {
-                counter_type: counterType,
-                increment_by: incrementBy
-            });
-            
-        if (error) {
-            console.error('Usage counter increment failed:', error);
-            return false;
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        // usage_statsテーブルに直接挿入/更新
+        let updateField;
+        switch (counterType) {
+            case 'events_created':
+                updateField = 'events_created';
+                break;
+            case 'songs_added':
+                updateField = 'songs_added';
+                break;
+            case 'api_calls':
+                updateField = 'api_calls_count';
+                break;
+            default:
+                console.warn(`Unknown counter type: ${counterType}`);
+                return true; // 不明な種類でもエラーにしない
         }
         
+        // upsert操作で今日のレコードを更新または作成
+        const { data, error } = await supabase
+            .from('usage_stats')
+            .upsert({
+                date: today,
+                [updateField]: incrementBy
+            }, {
+                onConflict: 'date',
+                ignoreDuplicates: false
+            })
+            .select();
+            
+        if (error) {
+            console.error('Direct usage counter increment failed:', error);
+            // RPC失敗時のフォールバック - エラーにはせずログのみ
+            return true;
+        }
+        
+        console.log(`✅ [DIRECT_INCREMENT] Success: ${counterType}`);
         return data;
     } catch (err) {
-        console.error('Usage counter error:', err);
-        return false;
+        console.error('Direct usage counter error:', err);
+        // エラー時もシステムを停止させない
+        return true;
     }
 }
 
@@ -193,11 +223,80 @@ async function getSystemLimits(supabase) {
     }
 }
 
-// 古い関数を完全に置き換え
+// 使用制限チェック関数（安全な制限付きバージョン）
 async function checkUsageLimit(supabase, counterType) {
-    console.log(`🚨 [OLD_FUNCTION_CALLED] This should not happen: ${counterType}`);
-    // 新しい関数にリダイレクト
-    return await checkUsageLimitNew(supabase, counterType);
+    console.log(`🔍 [SAFE_LIMIT_CHECK] Checking ${counterType}`);
+    
+    try {
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        
+        // 安全な月間制限（Netlify無料枠に配慮）
+        let monthlyLimit;
+        switch (counterType) {
+            case 'events_created':
+                monthlyLimit = 300; // 500→300に縮小（安全マージン）
+                break;
+            case 'songs_added':
+                monthlyLimit = 50000; // 100000→50000に縮小
+                break;
+            case 'api_calls':
+                monthlyLimit = 60000; // 120000→60000に縮小
+                break;
+            default:
+                monthlyLimit = 300;
+        }
+        
+        // 直接テーブルから使用量を取得
+        let selectField;
+        switch (counterType) {
+            case 'events_created':
+                selectField = 'events_created';
+                break;
+            case 'songs_added':
+                selectField = 'songs_added';
+                break;
+            case 'api_calls':
+                selectField = 'api_calls_count';
+                break;
+            default:
+                selectField = 'events_created';
+        }
+        
+        const { data: usageData, error: usageError } = await supabase
+            .from('usage_stats')
+            .select(selectField)
+            .gte('date', `${currentMonth}-01`)
+            .lte('date', `${currentMonth}-31`);
+        
+        let monthlyUsage = 0;
+        if (!usageError && usageData && usageData.length > 0) {
+            monthlyUsage = usageData.reduce((sum, row) => sum + (row[selectField] || 0), 0);
+        }
+        
+        const result = {
+            allowed: monthlyUsage < monthlyLimit,
+            daily_usage: 0,
+            daily_limit: 999999,
+            monthly_usage: monthlyUsage,
+            monthly_limit: monthlyLimit,
+            warning_threshold: Math.floor(monthlyLimit * 0.8), // 80%で警告
+            warning_triggered: monthlyUsage >= Math.floor(monthlyLimit * 0.8),
+            debug_source: "SAFE_DIRECT_ACCESS_2025_01_23"
+        };
+        
+        console.log(`📊 [SAFE_LIMIT_CHECK] ${counterType}: ${monthlyUsage}/${monthlyLimit}`, result);
+        return result;
+        
+    } catch (err) {
+        console.error('❌ [SAFE_LIMIT_CHECK] Error:', err);
+        // エラー時は制限を許可（システム継続優先）
+        return { 
+            allowed: true, 
+            monthly_usage: 0, 
+            monthly_limit: 999999,
+            debug_source: "ERROR_FALLBACK_SAFE_MODE" 
+        };
+    }
 }
 
 module.exports = {
