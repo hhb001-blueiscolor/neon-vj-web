@@ -22,24 +22,21 @@ module.exports = async function handler(req, res) {
   const supabase = createSupabaseClient();
 
   try {
-    // Phase 1: 制限チェック（90%制限での拒否）
-    const apiLimitCheck = await checkUsageLimit(supabase, 'api_calls');
+    // Phase 1: 制限チェック（月間制限のみ）
     const songLimitCheck = await checkUsageLimit(supabase, 'songs_added');
 
-    if (!apiLimitCheck.allowed || !songLimitCheck.allowed) {
+    if (!songLimitCheck.allowed) {
       return res.status(429).json({ 
-        error: 'Usage limit exceeded',
+        error: 'Monthly usage limit exceeded',
         details: {
-          api_calls: apiLimitCheck,
           songs_added: songLimitCheck
         }
       });
     }
 
     // 90%警告チェック
-    if (apiLimitCheck.warning_triggered || songLimitCheck.warning_triggered) {
-      console.warn('Usage approaching limit:', {
-        api_calls: apiLimitCheck,
+    if (songLimitCheck.warning_triggered) {
+      console.warn('Monthly usage approaching limit:', {
         songs_added: songLimitCheck
       });
     }

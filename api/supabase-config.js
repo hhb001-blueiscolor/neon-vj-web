@@ -54,23 +54,50 @@ async function incrementUsageCounter(supabase, counterType, incrementBy = 1) {
     }
 }
 
-// 制限チェック関数
+// 制限チェック関数（月間制限のみ）
 async function checkUsageLimit(supabase, counterType) {
     try {
-        const { data, error } = await supabase
-            .rpc('check_usage_limit', {
-                counter_type: counterType
-            });
+        // 月間制限のみをチェックする簡易版
+        // Netlifyの無料枠: 月125,000リクエスト
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        
+        // 今月の使用量を取得
+        const { data: usageData, error: usageError } = await supabase
+            .from('usage_stats')
+            .select(counterType === 'events_created' ? 'events_created' : 'songs_added')
+            .gte('date', `${currentMonth}-01`)
+            .lte('date', `${currentMonth}-31`);
             
-        if (error) {
-            console.error('Usage limit check failed:', error);
-            return { allowed: false, error: error.message };
+        if (usageError) {
+            console.error('Usage check error:', usageError);
+            // エラー時は制限しない（サービスを止めない）
+            return { allowed: true, monthly_usage: 0, monthly_limit: 125000 };
         }
         
-        return data;
+        // 合計を計算
+        let monthlyUsage = 0;
+        if (usageData && usageData.length > 0) {
+            const field = counterType === 'events_created' ? 'events_created' : 'songs_added';
+            monthlyUsage = usageData.reduce((sum, row) => sum + (row[field] || 0), 0);
+        }
+        
+        // 月間制限（6時間イベント×240曲を想定）
+        const monthlyLimit = counterType === 'events_created' ? 500 : 100000;
+        
+        return {
+            allowed: monthlyUsage < monthlyLimit,
+            daily_usage: 0, // 日次は無視
+            daily_limit: 999999, // 実質無制限
+            monthly_usage: monthlyUsage,
+            monthly_limit: monthlyLimit,
+            warning_threshold: Math.floor(monthlyLimit * 0.9),
+            warning_triggered: monthlyUsage >= Math.floor(monthlyLimit * 0.9)
+        };
+        
     } catch (err) {
         console.error('Usage limit check error:', err);
-        return { allowed: false, error: err.message };
+        // エラー時は制限しない
+        return { allowed: true, monthly_usage: 0, monthly_limit: 125000 };
     }
 }
 

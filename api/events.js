@@ -23,24 +23,22 @@ module.exports = async function handler(req, res) {
   const supabase = createSupabaseClient();
 
   try {
-    // Phase 1: 制限チェック（90%制限での拒否）
+    // Phase 1: 制限チェック（月間制限のみ）
     const apiLimitCheck = await checkUsageLimit(supabase, 'api_calls');
     const eventLimitCheck = await checkUsageLimit(supabase, 'events_created');
 
-    if (!apiLimitCheck.allowed || !eventLimitCheck.allowed) {
+    if (!eventLimitCheck.allowed) {
       return res.status(429).json({ 
-        error: 'Usage limit exceeded',
+        error: 'Monthly usage limit exceeded',
         details: {
-          api_calls: apiLimitCheck,
           events_created: eventLimitCheck
         }
       });
     }
 
     // 90%警告チェック
-    if (apiLimitCheck.warning_triggered || eventLimitCheck.warning_triggered) {
-      console.warn('Usage approaching limit:', {
-        api_calls: apiLimitCheck,
+    if (eventLimitCheck.warning_triggered) {
+      console.warn('Monthly usage approaching limit:', {
         events_created: eventLimitCheck
       });
     }
