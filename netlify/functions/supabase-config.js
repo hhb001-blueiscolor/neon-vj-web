@@ -1,20 +1,18 @@
-// Netlify Functions用 Supabase設定ファイル
-// 環境変数から安全にSupabase接続情報を取得
+// Supabase設定ファイル
+// 環境変数からSupabase接続情報を取得
 
 const { createClient } = require('@supabase/supabase-js');
 
-// 環境変数の検証（Netlify環境変数システム使用）
+// 環境変数の検証
 function validateEnvironmentVariables() {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Missing required environment variables: SUPABASE_URL or SUPABASE_ANON_KEY');
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+        throw new Error('Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY must be set');
     }
     
+    console.log('Using environment variables for Supabase configuration');
     return {
-        url: supabaseUrl,
-        key: supabaseKey
+        url: process.env.SUPABASE_URL,
+        key: process.env.SUPABASE_ANON_KEY
     };
 }
 

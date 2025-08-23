@@ -3,22 +3,16 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-// 環境変数の検証（フォールバック機能付き）
+// 環境変数の検証
 function validateEnvironmentVariables() {
-    // まず環境変数を確認
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-        console.log('Using environment variables for Supabase configuration');
-        return {
-            url: process.env.SUPABASE_URL,
-            key: process.env.SUPABASE_ANON_KEY
-        };
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+        throw new Error('Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY must be set');
     }
     
-    // 環境変数が利用できない場合のフォールバック（開発・テスト用）
-    console.log('Environment variables not found, using fallback configuration');
+    console.log('Using environment variables for Supabase configuration');
     return {
-        url: 'https://rvblfsgpjoypfdfmvmfw.supabase.co',
-        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2Ymxmc2dwam95cGZkZm12bWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NzQ3MjksImV4cCI6MjA1MTQ1MDcyOX0.sWfMRv8W3-9aRzWGfN8VR6TgGGaMrfp3m7w2pWJm5z8'
+        url: process.env.SUPABASE_URL,
+        key: process.env.SUPABASE_ANON_KEY
     };
 }
 
