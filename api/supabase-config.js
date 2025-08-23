@@ -118,7 +118,8 @@ async function checkUsageLimit(supabase, counterType) {
             monthly_usage: monthlyUsage,
             monthly_limit: monthlyLimit,
             warning_threshold: Math.floor(monthlyLimit * 0.9),
-            warning_triggered: monthlyUsage >= Math.floor(monthlyLimit * 0.9)
+            warning_triggered: monthlyUsage >= Math.floor(monthlyLimit * 0.9),
+            debug_source: "NEW_CODE_2025_01_23" // 新しいコードの証拠
         };
         
     } catch (err) {
