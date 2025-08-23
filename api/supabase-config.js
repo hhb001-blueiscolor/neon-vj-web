@@ -80,16 +80,44 @@ async function checkUsageLimit(supabase, counterType) {
         
         console.log(`📊 [NEW_CODE] Monthly limit for ${counterType}: ${monthlyLimit}`);
         
-        // 完全に制限を無効化（テスト目的）
+        // 今月の使用量を直接テーブルから取得
+        let selectField;
+        switch (counterType) {
+            case 'events_created':
+                selectField = 'events_created';
+                break;
+            case 'songs_added':
+                selectField = 'songs_added';
+                break;
+            case 'api_calls':
+                selectField = 'api_calls_count';
+                break;
+            default:
+                selectField = 'events_created';
+        }
+        
+        const { data: usageData, error: usageError } = await supabase
+            .from('usage_stats')
+            .select(selectField)
+            .gte('date', `${currentMonth}-01`)
+            .lte('date', `${currentMonth}-31`);
+        
+        let monthlyUsage = 0;
+        if (!usageError && usageData && usageData.length > 0) {
+            monthlyUsage = usageData.reduce((sum, row) => sum + (row[selectField] || 0), 0);
+        }
+        
+        console.log(`📈 [NEW_CODE] Monthly usage for ${counterType}: ${monthlyUsage}/${monthlyLimit}`);
+        
         const result = {
-            allowed: true, // 常に許可
-            daily_usage: 0,
-            daily_limit: 999999,
-            monthly_usage: 0, // 仮の値
+            allowed: monthlyUsage < monthlyLimit,
+            daily_usage: 0, // 日次制限は廃止
+            daily_limit: 999999, // 日次制限は実質無制限
+            monthly_usage: monthlyUsage,
             monthly_limit: monthlyLimit,
             warning_threshold: Math.floor(monthlyLimit * 0.9),
-            warning_triggered: false,
-            debug_source: "FIXED_NEW_CODE_2025_01_23",
+            warning_triggered: monthlyUsage >= Math.floor(monthlyLimit * 0.9),
+            debug_source: "PROPER_NEW_CODE_2025_01_23",
             debug_counterType: counterType
         };
         
