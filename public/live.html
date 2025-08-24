@@ -41,8 +41,6 @@
                         <span id="eventDate">--/--/--</span>
                         <span>•</span>
                         <span id="songCount">0 songs</span>
-                        <span>•</span>
-                        <span id="currentTime">--:--</span>
                     </div>
                 </div>
                 <button onclick="shareEvent()" 
@@ -126,8 +124,6 @@
             if (eventId) {
                 loadEventData();
                 updateTimer = setInterval(loadEventData, UPDATE_INTERVAL);
-                updateCurrentTime();
-                setInterval(updateCurrentTime, 1000);
             }
         });
         
@@ -353,15 +349,6 @@
             });
         }
         
-        // Update current time
-        function updateCurrentTime() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('ja-JP', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            document.getElementById('currentTime').textContent = timeStr;
-        }
         
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
