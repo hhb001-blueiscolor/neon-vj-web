@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Setlist - NeoN VJ</title>
+    <title>Live Playlist - NeoN VJ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -72,15 +72,15 @@
             </a>
         </div>
 
-        <!-- Setlist Container -->
-        <div id="setlistContainer" class="space-y-2">
+        <!-- Playlist Container -->
+        <div id="playlistContainer" class="space-y-2">
             <!-- Songs will be inserted here -->
         </div>
 
         <!-- Loading State -->
         <div id="loadingState" class="text-center py-12">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
-            <p class="text-gray-400 mt-4">Loading setlist...</p>
+            <p class="text-gray-400 mt-4">Loading playlist...</p>
         </div>
 
         <!-- Empty State -->
@@ -192,7 +192,7 @@
         
         // Display songs based on filter
         function displaySongs() {
-            const container = document.getElementById('setlistContainer');
+            const container = document.getElementById('playlistContainer');
             const filter = document.getElementById('djFilter').value;
             
             // Filter songs
@@ -222,7 +222,7 @@
         
         // Display songs in chronological order
         function displaySongsChronological(songList) {
-            const container = document.getElementById('setlistContainer');
+            const container = document.getElementById('playlistContainer');
             container.innerHTML = '';
             
             // Sort by timestamp (newest first)
@@ -236,7 +236,7 @@
         
         // Display songs grouped by DJ
         function displaySongsGrouped(songList) {
-            const container = document.getElementById('setlistContainer');
+            const container = document.getElementById('playlistContainer');
             container.innerHTML = '';
             
             // Group songs by DJ
@@ -291,8 +291,8 @@
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: eventData.name || 'NeoN VJ Live Setlist',
-                        text: 'Check out this live setlist!',
+                        title: eventData.name || 'NeoN VJ Live Playlist',
+                        text: 'Check out this live playlist!',
                         url: url
                     });
                 } catch (err) {
