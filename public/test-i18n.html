@@ -20,15 +20,6 @@
             line-height: 18px;
         }
         
-        .language-selector {
-            transition: all 0.3s ease;
-        }
-        
-        .language-selector:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
         .fade-in {
             animation: fadeIn 0.3s ease-in;
         }
@@ -40,56 +31,6 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
-    <!-- Language Selector Bar -->
-    <div class="bg-black/50 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-20">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-gray-400">Language / 言語 / 语言</h3>
-                <div class="flex gap-2 flex-wrap">
-                    <button onclick="changeLanguage('ja')" data-lang="ja" 
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇯🇵</span>
-                        <span>日本語</span>
-                    </button>
-                    <button onclick="changeLanguage('en')" data-lang="en"
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇺🇸</span>
-                        <span>English</span>
-                    </button>
-                    <button onclick="changeLanguage('zh-Hans')" data-lang="zh-Hans"
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇨🇳</span>
-                        <span>简体</span>
-                    </button>
-                    <button onclick="changeLanguage('zh-Hant')" data-lang="zh-Hant"
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇹🇼</span>
-                        <span>繁體</span>
-                    </button>
-                    <button onclick="changeLanguage('ko')" data-lang="ko"
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇰🇷</span>
-                        <span>한국어</span>
-                    </button>
-                    <button onclick="changeLanguage('fr')" data-lang="fr"
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇫🇷</span>
-                        <span>Français</span>
-                    </button>
-                    <button onclick="changeLanguage('es')" data-lang="es"
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇪🇸</span>
-                        <span>Español</span>
-                    </button>
-                    <button onclick="changeLanguage('th')" data-lang="th"
-                            class="language-selector px-3 py-1.5 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm transition flex items-center">
-                        <span class="flag-icon">🇹🇭</span>
-                        <span>ไทย</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Header -->
     <header class="bg-black/50 backdrop-blur-sm border-b border-gray-800">
@@ -104,11 +45,36 @@
                         <span id="songCount">0 songs</span>
                     </div>
                 </div>
-                <button onclick="shareEvent()" 
-                        id="shareButton"
-                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition">
-                    Share
-                </button>
+                <div class="flex items-center gap-3">
+                    <!-- Language Selector -->
+                    <div class="relative">
+                        <select id="languageSelector" 
+                                onchange="changeLanguage(this.value)"
+                                class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white appearance-none cursor-pointer pr-8 focus:outline-none focus:border-purple-500">
+                            <option value="" disabled>Language</option>
+                            <option value="ja" selected>🇯🇵 日本語</option>
+                            <option value="en">🇺🇸 English</option>
+                            <option value="zh-Hans">🇨🇳 简体中文</option>
+                            <option value="zh-Hant">🇹🇼 繁體中文</option>
+                            <option value="ko">🇰🇷 한국어</option>
+                            <option value="fr">🇫🇷 Français</option>
+                            <option value="es">🇪🇸 Español</option>
+                            <option value="th">🇹🇭 ไทย</option>
+                        </select>
+                        <!-- Custom dropdown arrow -->
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Share Button -->
+                    <button onclick="shareEvent()" 
+                            id="shareButton"
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition">
+                        Share
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -142,18 +108,6 @@
             </p>
         </div>
 
-        <!-- Language Info -->
-        <div class="mt-6 bg-purple-900/20 border border-purple-800 rounded-lg p-4">
-            <h3 class="text-purple-300 font-semibold mb-2" data-i18n="info.title">Language Settings</h3>
-            <p class="text-purple-200 text-sm">
-                <span data-i18n="info.current">Current Language</span>: 
-                <span id="currentLangDisplay" class="font-mono bg-purple-800/50 px-2 py-1 rounded">ja</span>
-            </p>
-            <p class="text-purple-200 text-sm mt-2">
-                <span data-i18n="info.stored">Stored in localStorage</span>: 
-                <code class="font-mono bg-purple-800/50 px-2 py-1 rounded">neon-vj-language</code>
-            </p>
-        </div>
     </main>
 
     <!-- Footer -->
@@ -182,9 +136,6 @@
                 'empty.message': 'まだ楽曲が再生されていません。最初の楽曲をお待ちください...',
                 'notice.recognition': '⚠️ 認識に失敗した楽曲は表示されない場合があります',
                 'notice.deletion': '🗓️ このページは30日後に自動削除されます',
-                'info.title': '言語設定',
-                'info.current': '現在の言語',
-                'info.stored': 'ローカルストレージ保存',
                 'footer.powered': 'Powered by NeoN VJ',
                 'now.tag': '再生中'
             },
@@ -199,9 +150,6 @@
                 'empty.message': 'No songs played yet. Waiting for the first song...',
                 'notice.recognition': '⚠️ Songs that failed recognition may not be displayed',
                 'notice.deletion': '🗓️ This page will be automatically deleted after 30 days',
-                'info.title': 'Language Settings',
-                'info.current': 'Current Language',
-                'info.stored': 'Stored in localStorage',
                 'footer.powered': 'Powered by NeoN VJ',
                 'now.tag': 'Now Playing'
             },
@@ -216,9 +164,6 @@
                 'empty.message': '还没有播放歌曲。等待第一首歌曲...',
                 'notice.recognition': '⚠️ 识别失败的歌曲可能不会显示',
                 'notice.deletion': '🗓️ 此页面将在30天后自动删除',
-                'info.title': '语言设置',
-                'info.current': '当前语言',
-                'info.stored': '存储在本地存储中',
                 'footer.powered': '由 NeoN VJ 提供支持',
                 'now.tag': '正在播放'
             },
@@ -233,9 +178,6 @@
                 'empty.message': '還沒有播放歌曲。等待第一首歌曲...',
                 'notice.recognition': '⚠️ 識別失敗的歌曲可能不會顯示',
                 'notice.deletion': '🗓️ 此頁面將在30天後自動刪除',
-                'info.title': '語言設定',
-                'info.current': '目前語言',
-                'info.stored': '儲存在本機儲存中',
                 'footer.powered': '由 NeoN VJ 提供支援',
                 'now.tag': '正在播放'
             },
@@ -250,9 +192,6 @@
                 'empty.message': '아직 재생된 곡이 없습니다. 첫 번째 곡을 기다리는 중...',
                 'notice.recognition': '⚠️ 인식에 실패한 곡은 표시되지 않을 수 있습니다',
                 'notice.deletion': '🗓️ 이 페이지는 30일 후 자동으로 삭제됩니다',
-                'info.title': '언어 설정',
-                'info.current': '현재 언어',
-                'info.stored': '로컬 스토리지에 저장',
                 'footer.powered': 'Powered by NeoN VJ',
                 'now.tag': '재생 중'
             },
@@ -267,9 +206,6 @@
                 'empty.message': 'Aucune chanson jouée. En attente de la première chanson...',
                 'notice.recognition': '⚠️ Les chansons non reconnues peuvent ne pas s\'afficher',
                 'notice.deletion': '🗓️ Cette page sera automatiquement supprimée après 30 jours',
-                'info.title': 'Paramètres de langue',
-                'info.current': 'Langue actuelle',
-                'info.stored': 'Stocké dans localStorage',
                 'footer.powered': 'Propulsé par NeoN VJ',
                 'now.tag': 'En cours'
             },
@@ -284,9 +220,6 @@
                 'empty.message': 'No hay canciones reproducidas. Esperando la primera canción...',
                 'notice.recognition': '⚠️ Las canciones no reconocidas pueden no mostrarse',
                 'notice.deletion': '🗓️ Esta página se eliminará automáticamente después de 30 días',
-                'info.title': 'Configuración de idioma',
-                'info.current': 'Idioma actual',
-                'info.stored': 'Almacenado en localStorage',
                 'footer.powered': 'Desarrollado por NeoN VJ',
                 'now.tag': 'Reproduciendo'
             },
@@ -301,9 +234,6 @@
                 'empty.message': 'ยังไม่มีเพลงที่เล่น กำลังรอเพลงแรก...',
                 'notice.recognition': '⚠️ เพลงที่ไม่สามารถระบุได้อาจไม่แสดง',
                 'notice.deletion': '🗓️ หน้านี้จะถูกลบโดยอัตโนมัติหลังจาก 30 วัน',
-                'info.title': 'การตั้งค่าภาษา',
-                'info.current': 'ภาษาปัจจุบัน',
-                'info.stored': 'เก็บใน localStorage',
                 'footer.powered': 'ขับเคลื่อนโดย NeoN VJ',
                 'now.tag': 'กำลังเล่น'
             }
@@ -318,25 +248,8 @@
             { title: 'Montero', artist: 'Lil Nas X', dj_name: 'DJ Beta', timestamp: new Date(Date.now() - 540000) }
         ];
 
-        // Current language
-        let currentLanguage = localStorage.getItem('neon-vj-language') || detectBrowserLanguage();
-
-        // Detect browser language
-        function detectBrowserLanguage() {
-            const browserLang = navigator.language.toLowerCase();
-            
-            // Map browser languages to our supported languages
-            if (browserLang.startsWith('ja')) return 'ja';
-            if (browserLang.startsWith('ko')) return 'ko';
-            if (browserLang.startsWith('fr')) return 'fr';
-            if (browserLang.startsWith('es')) return 'es';
-            if (browserLang.startsWith('th')) return 'th';
-            if (browserLang === 'zh-cn' || browserLang === 'zh-hans') return 'zh-Hans';
-            if (browserLang === 'zh-tw' || browserLang === 'zh-hk' || browserLang === 'zh-hant') return 'zh-Hant';
-            
-            // Default to English
-            return 'en';
-        }
+        // Current language - default to Japanese
+        let currentLanguage = localStorage.getItem('neon-vj-language') || 'ja';
 
         // Initialize page
         function initializePage() {
@@ -373,19 +286,10 @@
             // Update specific elements
             document.getElementById('eventName').textContent = translations[lang]['event.name'];
             document.getElementById('shareButton').textContent = translations[lang]['share.button'];
-            document.getElementById('currentLangDisplay').textContent = lang;
             
-            // Update language selector buttons
-            document.querySelectorAll('.language-selector').forEach(btn => {
-                btn.classList.remove('bg-purple-600');
-                btn.classList.add('bg-gray-800');
-            });
-            
-            const activeBtn = document.querySelector(`[data-lang="${lang}"]`);
-            if (activeBtn) {
-                activeBtn.classList.remove('bg-gray-800');
-                activeBtn.classList.add('bg-purple-600');
-            }
+            // Update language selector dropdown
+            const selector = document.getElementById('languageSelector');
+            selector.value = lang;
             
             // Update song count display
             updateSongCount();
