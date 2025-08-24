@@ -2,7 +2,8 @@
 const { 
   createSupabaseClient, 
   incrementUsageCounter, 
-  checkUsageLimit 
+  checkUsageLimit,
+  checkUsageLimitNew
 } = require('./supabase-config');
 
 module.exports = async function handler(req, res) {
@@ -23,7 +24,7 @@ module.exports = async function handler(req, res) {
 
   try {
     // Phase 1: 制限チェック（API呼び出し制限のみ）
-    const apiLimitCheck = await checkUsageLimit(supabase, 'api_calls');
+    const apiLimitCheck = await checkUsageLimitNew(supabase, 'api_calls');
 
     if (!apiLimitCheck.allowed) {
       return res.status(429).json({ 
