@@ -269,8 +269,25 @@
             const div = document.createElement('div');
             div.className = `bg-gray-800/50 rounded-lg p-4 ${isLatest ? 'border border-purple-500 fade-in' : ''}`;
             
-            const djText = (hideDJ || !song.dj_name || song.dj_name.trim() === '') ? '' : ` (${song.dj_name})`;
-            const nowTag = isLatest ? '[Now]' : '';
+            // DJ名の表示判定: 空文字、"DJ"のみ、hideDJフラグをチェック
+            const shouldHideDJ = hideDJ || 
+                                !song.dj_name || 
+                                song.dj_name.trim() === '' || 
+                                song.dj_name.trim() === 'DJ';
+            const djText = shouldHideDJ ? '' : ` (${song.dj_name})`;
+            
+            // [Now]タグの表示判定: 最新楽曲かつ5分以内
+            let nowTag = '';
+            if (isLatest && song.timestamp) {
+                const songTime = new Date(song.timestamp);
+                const now = new Date();
+                const minutesElapsed = (now - songTime) / (1000 * 60);
+                
+                // 5分以内なら[Now]を表示
+                if (minutesElapsed <= 5) {
+                    nowTag = '[Now]';
+                }
+            }
             
             div.innerHTML = `
                 <div class="font-medium">${nowTag}${song.title} / ${song.artist}${djText}</div>
