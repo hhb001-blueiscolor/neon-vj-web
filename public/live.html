@@ -43,10 +43,36 @@
                         <span id="songCount">0 songs</span>
                     </div>
                 </div>
-                <button onclick="shareEvent()" 
-                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition">
-                    Share
-                </button>
+                <div class="flex items-center gap-3">
+                    <!-- Language Selector -->
+                    <div class="relative">
+                        <select id="languageSelector" 
+                                onchange="changeLanguage(this.value)"
+                                class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white appearance-none cursor-pointer pr-8 focus:outline-none focus:border-purple-500">
+                            <option value="" disabled>Language</option>
+                            <option value="ja" selected>🇯🇵 日本語</option>
+                            <option value="en">🇺🇸 English</option>
+                            <option value="zh-Hans">🇨🇳 简体中文</option>
+                            <option value="zh-Hant">🇹🇼 繁體中文</option>
+                            <option value="ko">🇰🇷 한국어</option>
+                            <option value="fr">🇫🇷 Français</option>
+                            <option value="es">🇪🇸 Español</option>
+                            <option value="th">🇹🇭 ไทย</option>
+                        </select>
+                        <!-- Custom dropdown arrow -->
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Share Button -->
+                    <button onclick="shareEvent()" 
+                            id="shareButton"
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition">
+                        Share
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -108,6 +134,133 @@
     </footer>
 
     <script>
+        // Translations object for all 8 languages
+        const translations = {
+            'ja': {
+                'share.button': 'シェア',
+                'share.title': 'NeoN VJ ライブプレイリスト',
+                'share.text': 'このイベントのプレイリストをチェック！',
+                'share.copied': 'URLをクリップボードにコピーしました！',
+                'filter.all': 'すべてのDJ',
+                'loading.message': 'プレイリストを読み込み中...',
+                'empty.message': 'まだ楽曲が再生されていません。最初の楽曲をお待ちください...',
+                'error.not_found': 'イベントが見つかりません',
+                'notice.recognition': '⚠️ 認識に失敗した楽曲は表示されない場合があります',
+                'notice.deletion': '🗓️ このページは30日後に自動削除されます',
+                'footer.powered': 'Powered by NeoN VJ',
+                'now.tag': 'Now',
+                'songs.count': '曲'
+            },
+            'en': {
+                'share.button': 'Share',
+                'share.title': 'NeoN VJ Live Playlist',
+                'share.text': 'Check out this event playlist!',
+                'share.copied': 'URL copied to clipboard!',
+                'filter.all': 'All DJs',
+                'loading.message': 'Loading playlist...',
+                'empty.message': 'No songs played yet. Waiting for the first song...',
+                'error.not_found': 'Event not found',
+                'notice.recognition': '⚠️ Songs that failed recognition may not be displayed',
+                'notice.deletion': '🗓️ This page will be automatically deleted after 30 days',
+                'footer.powered': 'Powered by NeoN VJ',
+                'now.tag': 'Now',
+                'songs.count': 'songs'
+            },
+            'zh-Hans': {
+                'share.button': '分享',
+                'share.title': 'NeoN VJ 现场播放列表',
+                'share.text': '查看这个活动的播放列表！',
+                'share.copied': 'URL已复制到剪贴板！',
+                'filter.all': '所有DJ',
+                'loading.message': '正在加载播放列表...',
+                'empty.message': '还没有播放歌曲。等待第一首歌曲...',
+                'error.not_found': '找不到活动',
+                'notice.recognition': '⚠️ 识别失败的歌曲可能不会显示',
+                'notice.deletion': '🗓️ 此页面将在30天后自动删除',
+                'footer.powered': '由 NeoN VJ 提供支持',
+                'now.tag': 'Now',
+                'songs.count': '首歌曲'
+            },
+            'zh-Hant': {
+                'share.button': '分享',
+                'share.title': 'NeoN VJ 現場播放清單',
+                'share.text': '查看這個活動的播放清單！',
+                'share.copied': 'URL已複製到剪貼簿！',
+                'filter.all': '所有DJ',
+                'loading.message': '正在載入播放清單...',
+                'empty.message': '還沒有播放歌曲。等待第一首歌曲...',
+                'error.not_found': '找不到活動',
+                'notice.recognition': '⚠️ 識別失敗的歌曲可能不會顯示',
+                'notice.deletion': '🗓️ 此頁面將在30天後自動刪除',
+                'footer.powered': '由 NeoN VJ 提供支援',
+                'now.tag': 'Now',
+                'songs.count': '首歌曲'
+            },
+            'ko': {
+                'share.button': '공유',
+                'share.title': 'NeoN VJ 라이브 플레이리스트',
+                'share.text': '이 이벤트의 플레이리스트를 확인하세요!',
+                'share.copied': 'URL이 클립보드에 복사되었습니다!',
+                'filter.all': '모든 DJ',
+                'loading.message': '플레이리스트 로딩 중...',
+                'empty.message': '아직 재생된 곡이 없습니다. 첫 번째 곡을 기다리는 중...',
+                'error.not_found': '이벤트를 찾을 수 없습니다',
+                'notice.recognition': '⚠️ 인식에 실패한 곡은 표시되지 않을 수 있습니다',
+                'notice.deletion': '🗓️ 이 페이지는 30일 후 자동으로 삭제됩니다',
+                'footer.powered': 'Powered by NeoN VJ',
+                'now.tag': 'Now',
+                'songs.count': '곡'
+            },
+            'fr': {
+                'share.button': 'Partager',
+                'share.title': 'NeoN VJ Playlist Live',
+                'share.text': 'Découvrez la playlist de cet événement!',
+                'share.copied': 'URL copiée dans le presse-papiers!',
+                'filter.all': 'Tous les DJs',
+                'loading.message': 'Chargement de la playlist...',
+                'empty.message': 'Aucune chanson jouée. En attente de la première chanson...',
+                'error.not_found': 'Événement non trouvé',
+                'notice.recognition': '⚠️ Les chansons non reconnues peuvent ne pas s\'afficher',
+                'notice.deletion': '🗓️ Cette page sera automatiquement supprimée après 30 jours',
+                'footer.powered': 'Propulsé par NeoN VJ',
+                'now.tag': 'Now',
+                'songs.count': 'chansons'
+            },
+            'es': {
+                'share.button': 'Compartir',
+                'share.title': 'NeoN VJ Lista en Vivo',
+                'share.text': '¡Mira la lista de este evento!',
+                'share.copied': '¡URL copiada al portapapeles!',
+                'filter.all': 'Todos los DJs',
+                'loading.message': 'Cargando lista...',
+                'empty.message': 'No hay canciones reproducidas. Esperando la primera canción...',
+                'error.not_found': 'Evento no encontrado',
+                'notice.recognition': '⚠️ Las canciones no reconocidas pueden no mostrarse',
+                'notice.deletion': '🗓️ Esta página se eliminará automáticamente después de 30 días',
+                'footer.powered': 'Desarrollado por NeoN VJ',
+                'now.tag': 'Now',
+                'songs.count': 'canciones'
+            },
+            'th': {
+                'share.button': 'แชร์',
+                'share.title': 'NeoN VJ เพลย์ลิสต์สด',
+                'share.text': 'ดูเพลย์ลิสต์ของกิจกรรมนี้!',
+                'share.copied': 'คัดลอก URL ไปยังคลิปบอร์ดแล้ว!',
+                'filter.all': 'DJ ทั้งหมด',
+                'loading.message': 'กำลังโหลดเพลย์ลิสต์...',
+                'empty.message': 'ยังไม่มีเพลงที่เล่น กำลังรอเพลงแรก...',
+                'error.not_found': 'ไม่พบกิจกรรม',
+                'notice.recognition': '⚠️ เพลงที่ไม่สามารถระบุได้อาจไม่แสดง',
+                'notice.deletion': '🗓️ หน้านี้จะถูกลบโดยอัตโนมัติหลังจาก 30 วัน',
+                'footer.powered': 'ขับเคลื่อนโดย NeoN VJ',
+                'now.tag': 'Now',
+                'songs.count': 'เพลง'
+            }
+        };
+
+        // Current language - default to Japanese
+        let currentLanguage = localStorage.getItem('neon-vj-language') || 'ja';
+
         // Configuration
         const UPDATE_INTERVAL = 60000; // 60 seconds
         let eventId = null;
@@ -117,6 +270,9 @@
         
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
+            // Initialize language
+            initializeLanguage();
+            
             // Get event ID from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             eventId = urlParams.get('event');
@@ -126,6 +282,89 @@
                 updateTimer = setInterval(loadEventData, UPDATE_INTERVAL);
             }
         });
+
+        // Initialize language system
+        function initializeLanguage() {
+            // Set language selector to current language
+            const selector = document.getElementById('languageSelector');
+            selector.value = currentLanguage;
+            
+            // Set HTML lang attribute
+            document.documentElement.lang = currentLanguage;
+            
+            // Update initial UI elements
+            updateStaticTranslations();
+        }
+
+        // Change language
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('neon-vj-language', lang);
+            
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+            
+            // Update language selector
+            document.getElementById('languageSelector').value = lang;
+            
+            // Update all translatable elements
+            updateStaticTranslations();
+            
+            // Refresh dynamic content if available
+            if (eventData) {
+                updateUI();
+            }
+        }
+
+        // Update static translations
+        function updateStaticTranslations() {
+            const t = translations[currentLanguage];
+            
+            // Update share button
+            const shareButton = document.getElementById('shareButton');
+            if (shareButton) {
+                shareButton.textContent = t['share.button'];
+            }
+            
+            // Update DJ filter
+            const djFilter = document.getElementById('djFilter');
+            if (djFilter && djFilter.options.length > 0) {
+                djFilter.options[0].textContent = t['filter.all'];
+            }
+            
+            // Update loading state
+            const loadingState = document.getElementById('loadingState');
+            if (loadingState) {
+                const loadingText = loadingState.querySelector('p');
+                if (loadingText) {
+                    loadingText.textContent = t['loading.message'];
+                }
+            }
+            
+            // Update empty state
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState) {
+                const emptyText = emptyState.querySelector('p');
+                if (emptyText) {
+                    emptyText.textContent = t['empty.message'];
+                }
+            }
+            
+            // Update notice section
+            const noticeSection = document.querySelector('.bg-yellow-900\\/20 p');
+            if (noticeSection) {
+                noticeSection.innerHTML = `
+                    ${t['notice.recognition']}<br>
+                    ${t['notice.deletion']}
+                `;
+            }
+            
+            // Update footer
+            const footerText = document.querySelector('footer .text-gray-400');
+            if (footerText) {
+                footerText.textContent = t['footer.powered'];
+            }
+        }
         
         // Load event data from JSON
         async function loadEventData() {
@@ -141,7 +380,7 @@
             } catch (error) {
                 console.error('Failed to load event data:', error);
                 document.getElementById('loadingState').innerHTML = `
-                    <p class="text-red-400">イベントが見つかりません</p>
+                    <p class="text-red-400">${translations[currentLanguage]['error.not_found']}</p>
                 `;
             }
         }
@@ -153,7 +392,7 @@
             
             // Update event info
             document.getElementById('eventName').textContent = eventData.name || 'Live Event';
-            document.getElementById('songCount').textContent = `${songs.length} songs`;
+            document.getElementById('songCount').textContent = `${songs.length} ${translations[currentLanguage]['songs.count']}`;
             
             // Update event date (format: YYYY/MM/DD)
             if (eventData.created_at) {
@@ -186,7 +425,7 @@
             const djFilter = document.getElementById('djFilter');
             
             // Keep "All DJs" option
-            djFilter.innerHTML = '<option value="all">All DJs</option>';
+            djFilter.innerHTML = `<option value="all">${translations[currentLanguage]['filter.all']}</option>`;
             
             // Add DJ options
             djSet.forEach(dj => {
@@ -304,7 +543,7 @@
                 
                 // 5分以内なら[Now]を表示
                 if (minutesElapsed <= 5) {
-                    nowTag = '[Now]';
+                    nowTag = `[${translations[currentLanguage]['now.tag']}]`;
                 }
             }
             
@@ -326,12 +565,13 @@
         // Share event
         async function shareEvent() {
             const url = window.location.href;
+            const t = translations[currentLanguage];
             
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: eventData.name || 'NeoN VJ ライブプレイリスト',
-                        text: 'このイベントのプレイリストをチェック！',
+                        title: eventData.name || t['share.title'],
+                        text: t['share.text'],
                         url: url
                     });
                 } catch (err) {
@@ -345,7 +585,7 @@
         // Copy to clipboard
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('URLをクリップボードにコピーしました！');
+                alert(translations[currentLanguage]['share.copied']);
             });
         }
         
