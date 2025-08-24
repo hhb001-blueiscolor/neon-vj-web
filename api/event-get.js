@@ -22,16 +22,14 @@ module.exports = async function handler(req, res) {
   const supabase = createSupabaseClient();
 
   try {
-    // Phase 1: 制限チェック（軽量チェック - データ取得は頻繁）
+    // Phase 1: 制限チェック（API呼び出し制限のみ）
     const apiLimitCheck = await checkUsageLimit(supabase, 'api_calls');
-    const dataLimitCheck = await checkUsageLimit(supabase, 'data_retrieved');
 
-    if (!apiLimitCheck.allowed || !dataLimitCheck.allowed) {
+    if (!apiLimitCheck.allowed) {
       return res.status(429).json({ 
         error: 'Usage limit exceeded',
         details: {
-          api_calls: apiLimitCheck,
-          data_retrieved: dataLimitCheck
+          api_calls: apiLimitCheck
         }
       });
     }
@@ -83,11 +81,8 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Songs fetch failed' });
     }
 
-    // Phase 5: 使用量カウンター更新
-    await Promise.all([
-      incrementUsageCounter(supabase, 'api_calls'),
-      incrementUsageCounter(supabase, 'data_retrieved')
-    ]);
+    // Phase 5: 使用量カウンター更新（API呼び出しのみ）
+    await incrementUsageCounter(supabase, 'api_calls');
 
     // Phase 6: レガシー形式での返却（Web側の互換性保持）
     const responseData = {
@@ -107,8 +102,7 @@ module.exports = async function handler(req, res) {
         timestamp: song.timestamp
       })),
       usage: {
-        api_calls: apiLimitCheck,
-        data_retrieved: dataLimitCheck
+        api_calls: apiLimitCheck
       },
       meta: {
         total_songs: songsData.length,
