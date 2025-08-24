@@ -119,9 +119,9 @@
         
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
-            // Get event ID from URL
-            const pathParts = window.location.pathname.split('/');
-            eventId = pathParts[pathParts.length - 1];
+            // Get event ID from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            eventId = urlParams.get('event');
             
             if (eventId) {
                 loadEventData();
