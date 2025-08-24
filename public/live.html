@@ -229,7 +229,9 @@
             const sortedSongs = [...songList].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             sortedSongs.forEach((song, index) => {
-                const songEl = createSongElement(song, index === 0);
+                // 通し番号は全楽曲数から逆算（新しいほど大きい番号）
+                const songNumber = sortedSongs.length - index;
+                const songEl = createSongElement(song, index === 0, false, songNumber);
                 container.appendChild(songEl);
             });
         }
@@ -238,6 +240,14 @@
         function displaySongsGrouped(songList) {
             const container = document.getElementById('playlistContainer');
             container.innerHTML = '';
+            
+            // 全楽曲を時系列でソートして通し番号を決定
+            const sortedAllSongs = [...songList].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const songNumberMap = {};
+            sortedAllSongs.forEach((song, index) => {
+                const key = `${song.title}_${song.artist}_${song.timestamp}`;
+                songNumberMap[key] = index + 1;
+            });
             
             // Group songs by DJ
             const groups = {};
@@ -258,14 +268,16 @@
                 
                 // DJ's songs
                 djSongs.reverse().forEach((song, index) => {
-                    const songEl = createSongElement(song, false, true);
+                    const key = `${song.title}_${song.artist}_${song.timestamp}`;
+                    const songNumber = songNumberMap[key];
+                    const songEl = createSongElement(song, false, true, songNumber);
                     container.appendChild(songEl);
                 });
             });
         }
         
         // Create song element
-        function createSongElement(song, isLatest = false, hideDJ = false) {
+        function createSongElement(song, isLatest = false, hideDJ = false, songNumber = 0) {
             const div = document.createElement('div');
             div.className = `bg-gray-800/50 rounded-lg p-4 ${isLatest ? 'border border-purple-500 fade-in' : ''}`;
             
@@ -289,8 +301,11 @@
                 }
             }
             
+            // 通し番号の表示
+            const numberPrefix = songNumber > 0 ? `${songNumber}. ` : '';
+            
             div.innerHTML = `
-                <div class="font-medium"><span class="text-yellow-400">${nowTag}</span>${song.title} / ${song.artist}${djText}</div>
+                <div class="font-medium"><span class="text-yellow-400">${nowTag}</span>${numberPrefix}${song.title} / ${song.artist}${djText}</div>
             `;
             
             return div;
@@ -308,8 +323,8 @@
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: eventData.name || 'NeoN VJ Live Playlist',
-                        text: 'Check out this live playlist!',
+                        title: eventData.name || 'NeoN VJ ライブプレイリスト',
+                        text: 'このライブプレイリストをチェック！',
                         url: url
                     });
                 } catch (err) {
@@ -323,7 +338,7 @@
         // Copy to clipboard
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('URL copied to clipboard!');
+                alert('URLをクリップボードにコピーしました！');
             });
         }
         
