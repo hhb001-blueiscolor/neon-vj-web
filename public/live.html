@@ -37,8 +37,8 @@
                 <div>
                     <h1 id="eventName" class="text-xl font-semibold">Loading...</h1>
                     <div class="flex items-center gap-2 text-sm text-gray-400">
-                        <span class="inline-block w-2 h-2 bg-red-500 rounded-full pulse-dot"></span>
-                        <span>LIVE</span>
+                        <span>📅</span>
+                        <span id="eventDate">--/--/--</span>
                         <span>•</span>
                         <span id="songCount">0 songs</span>
                         <span>•</span>
@@ -158,6 +158,17 @@
             // Update event info
             document.getElementById('eventName').textContent = eventData.name || 'Live Event';
             document.getElementById('songCount').textContent = `${songs.length} songs`;
+            
+            // Update event date (format: YYYY/MM/DD)
+            if (eventData.created_at) {
+                const eventDate = new Date(eventData.created_at);
+                const formatDate = eventDate.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                document.getElementById('eventDate').textContent = formatDate;
+            }
             
             // Update event URL if exists
             if (eventData.event_url) {
