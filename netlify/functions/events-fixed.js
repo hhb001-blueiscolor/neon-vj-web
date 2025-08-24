@@ -1,28 +1,39 @@
-// 根治版：完全に動作するイベント作成API
+// 根治版：完全に動作するイベント作成API (Netlify Functions形式)
 const { createSupabaseClient } = require('./supabase-config');
 
-module.exports = async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+exports.handler = async (event, context) => {
+  // CORS handling
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
     console.log('🚀 [FIXED] Event creation started');
     
     const supabase = createSupabaseClient();
-    const { eventName, eventURL, djDisplayMode, deviceId } = req.body;
+    const { eventName, eventURL, djDisplayMode, deviceId } = JSON.parse(event.body);
 
     if (!eventName || !deviceId) {
-      return res.status(400).json({ error: 'Missing required fields: eventName and deviceId' });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Missing required fields: eventName and deviceId' })
+      };
     }
 
     // イベントID生成
@@ -52,10 +63,14 @@ module.exports = async function handler(req, res) {
 
     if (eventError) {
       console.error('❌ [FIXED] Event creation failed:', eventError);
-      return res.status(500).json({ 
-        error: 'Event creation failed',
-        details: eventError.message
-      });
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Event creation failed',
+          details: eventError.message
+        })
+      };
     }
 
     console.log('✅ [FIXED] Event created successfully:', eventData);
@@ -88,22 +103,30 @@ module.exports = async function handler(req, res) {
       eventURL: `https://web.neondjneon.com/live.html?event=${eventId}`,
       event: eventData,
       debug_info: {
-        source: 'FIXED_API_2025_01_24',
+        source: 'FIXED_API_NETLIFY_2025_01_24',
         timestamp: new Date().toISOString(),
         event_count: 1
       }
     };
 
     console.log('🎉 [FIXED] Success response:', responseData);
-    res.status(201).json(responseData);
+    return {
+      statusCode: 201,
+      headers,
+      body: JSON.stringify(responseData)
+    };
 
   } catch (error) {
     console.error('💥 [FIXED] Critical error:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message,
-      debug_source: 'FIXED_API_ERROR'
-    });
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Internal server error',
+        message: error.message,
+        debug_source: 'FIXED_API_NETLIFY_ERROR'
+      })
+    };
   }
 }
 

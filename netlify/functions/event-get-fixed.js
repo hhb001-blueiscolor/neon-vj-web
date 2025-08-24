@@ -1,28 +1,39 @@
-// 根治版：完全に動作するイベント取得API
+// 根治版：完全に動作するイベント取得API (Netlify Functions形式)
 const { createSupabaseClient } = require('./supabase-config');
 
-module.exports = async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+exports.handler = async (event, context) => {
+  // CORS handling
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
   }
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
     console.log('📖 [FIXED] Event retrieval started');
     
     const supabase = createSupabaseClient();
-    const { eventId } = req.query;
+    const { eventId } = event.queryStringParameters || {};
 
     if (!eventId) {
-      return res.status(400).json({ error: 'Event ID is required' });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Event ID is required' })
+      };
     }
 
     console.log(`🔍 [FIXED] Retrieving event: ${eventId}`);
@@ -37,10 +48,14 @@ module.exports = async function handler(req, res) {
 
     if (eventError || !eventData) {
       console.error('❌ [FIXED] Event not found:', eventId, eventError);
-      return res.status(404).json({ 
-        error: 'Event not found',
-        eventId: eventId
-      });
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Event not found',
+          eventId: eventId
+        })
+      };
     }
 
     console.log('✅ [FIXED] Event found:', eventData);
@@ -98,7 +113,7 @@ module.exports = async function handler(req, res) {
         total_songs: songsData?.length || 0,
         last_updated: new Date().toISOString(),
         debug_info: {
-          source: 'FIXED_GET_API_2025_01_24',
+          source: 'FIXED_GET_API_NETLIFY_2025_01_24',
           event_found: true,
           songs_found: songsData?.length || 0
         }
@@ -106,14 +121,22 @@ module.exports = async function handler(req, res) {
     };
 
     console.log('🎉 [FIXED] Event retrieval success');
-    res.status(200).json(responseData);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(responseData)
+    };
 
   } catch (error) {
     console.error('💥 [FIXED] Critical error in event retrieval:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message,
-      debug_source: 'FIXED_GET_API_ERROR'
-    });
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Internal server error',
+        message: error.message,
+        debug_source: 'FIXED_GET_API_NETLIFY_ERROR'
+      })
+    };
   }
 };

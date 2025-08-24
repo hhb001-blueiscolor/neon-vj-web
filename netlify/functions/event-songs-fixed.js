@@ -1,31 +1,42 @@
-// 根治版：完全に動作する楽曲追加API
+// 根治版：完全に動作する楽曲追加API (Netlify Functions形式)
 const { createSupabaseClient } = require('./supabase-config');
 
-module.exports = async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+exports.handler = async (event, context) => {
+  // CORS handling
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
     console.log('🎵 [FIXED] Song addition started');
     
     const supabase = createSupabaseClient();
-    const { eventId } = req.query;
-    const { title, artist, djName, deviceId } = req.body;
+    const { eventId } = event.queryStringParameters || {};
+    const { title, artist, djName, deviceId } = JSON.parse(event.body);
 
     if (!eventId || !title || !artist || !deviceId) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: eventId, title, artist, deviceId' 
-      });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Missing required fields: eventId, title, artist, deviceId' 
+        })
+      };
     }
 
     console.log(`🎶 [FIXED] Adding song: ${title} by ${artist} to event ${eventId}`);
@@ -40,7 +51,11 @@ module.exports = async function handler(req, res) {
 
     if (eventCheckError || !eventCheck) {
       console.error('❌ [FIXED] Event not found:', eventId);
-      return res.status(404).json({ error: 'Event not found or inactive' });
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: 'Event not found or inactive' })
+      };
     }
 
     console.log('✅ [FIXED] Event found:', eventCheck);
@@ -63,10 +78,14 @@ module.exports = async function handler(req, res) {
 
     if (songError) {
       console.error('❌ [FIXED] Song creation failed:', songError);
-      return res.status(500).json({ 
-        error: 'Song creation failed',
-        details: songError.message
-      });
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Song creation failed',
+          details: songError.message
+        })
+      };
     }
 
     console.log('✅ [FIXED] Song added successfully:', songData);
@@ -97,20 +116,28 @@ module.exports = async function handler(req, res) {
       song: songData,
       event: eventCheck,
       debug_info: {
-        source: 'FIXED_SONG_API_2025_01_24',
+        source: 'FIXED_SONG_API_NETLIFY_2025_01_24',
         timestamp: new Date().toISOString()
       }
     };
 
     console.log('🎉 [FIXED] Song addition success:', responseData);
-    res.status(201).json(responseData);
+    return {
+      statusCode: 201,
+      headers,
+      body: JSON.stringify(responseData)
+    };
 
   } catch (error) {
     console.error('💥 [FIXED] Critical error in song addition:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message,
-      debug_source: 'FIXED_SONG_API_ERROR'
-    });
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Internal server error',
+        message: error.message,
+        debug_source: 'FIXED_SONG_API_NETLIFY_ERROR'
+      })
+    };
   }
 };
