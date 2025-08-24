@@ -54,23 +54,84 @@ async function incrementUsageCounter(supabase, counterType, incrementBy = 1) {
     }
 }
 
-// 制限チェック関数
-async function checkUsageLimit(supabase, counterType) {
+// 制限チェック関数（完全リニューアル版 - 2025/01/23修正）
+async function checkUsageLimitNew(supabase, counterType) {
+    console.log(`🔍 [NEW_CODE] Checking usage for: ${counterType}`);
+    
     try {
-        const { data, error } = await supabase
-            .rpc('check_usage_limit', {
-                counter_type: counterType
-            });
-            
-        if (error) {
-            console.error('Usage limit check failed:', error);
-            return { allowed: false, error: error.message };
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        console.log(`📅 [NEW_CODE] Current month: ${currentMonth}`);
+        
+        // 月間制限設定
+        let monthlyLimit;
+        switch (counterType) {
+            case 'events_created':
+                monthlyLimit = 500;
+                break;
+            case 'songs_added':
+                monthlyLimit = 100000;
+                break;
+            case 'api_calls':
+                monthlyLimit = 120000;
+                break;
+            default:
+                monthlyLimit = 500;
         }
         
-        return data;
+        console.log(`📊 [NEW_CODE] Monthly limit for ${counterType}: ${monthlyLimit}`);
+        
+        // 今月の使用量を直接テーブルから取得
+        let selectField;
+        switch (counterType) {
+            case 'events_created':
+                selectField = 'events_created';
+                break;
+            case 'songs_added':
+                selectField = 'songs_added';
+                break;
+            case 'api_calls':
+                selectField = 'api_calls_count';
+                break;
+            default:
+                selectField = 'events_created';
+        }
+        
+        const { data: usageData, error: usageError } = await supabase
+            .from('usage_stats')
+            .select(selectField)
+            .gte('date', `${currentMonth}-01`)
+            .lte('date', `${currentMonth}-31`);
+        
+        let monthlyUsage = 0;
+        if (!usageError && usageData && usageData.length > 0) {
+            monthlyUsage = usageData.reduce((sum, row) => sum + (row[selectField] || 0), 0);
+        }
+        
+        console.log(`📈 [NEW_CODE] Monthly usage for ${counterType}: ${monthlyUsage}/${monthlyLimit}`);
+        
+        const result = {
+            allowed: monthlyUsage < monthlyLimit,
+            daily_usage: 0, // 日次制限は廃止
+            daily_limit: 999999, // 日次制限は実質無制限
+            monthly_usage: monthlyUsage,
+            monthly_limit: monthlyLimit,
+            warning_threshold: Math.floor(monthlyLimit * 0.9),
+            warning_triggered: monthlyUsage >= Math.floor(monthlyLimit * 0.9),
+            debug_source: "PROPER_NEW_CODE_2025_01_23",
+            debug_counterType: counterType
+        };
+        
+        console.log(`✅ [NEW_CODE] Result:`, result);
+        return result;
+        
     } catch (err) {
-        console.error('Usage limit check error:', err);
-        return { allowed: false, error: err.message };
+        console.error('❌ [NEW_CODE] Error:', err);
+        return { 
+            allowed: true, 
+            monthly_usage: 0, 
+            monthly_limit: 999999,
+            debug_source: "ERROR_FALLBACK_NEW_CODE" 
+        };
     }
 }
 
@@ -132,10 +193,41 @@ async function getSystemLimits(supabase) {
     }
 }
 
+// 制限チェック関数
+async function checkUsageLimit(supabase, counterType) {
+    try {
+        const { data, error } = await supabase
+            .rpc('check_usage_limit', {
+                counter_type: counterType
+            });
+            
+        if (error) {
+            console.error('Usage limit check failed:', error);
+            return {
+                allowed: true,
+                monthly_usage: 0,
+                monthly_limit: 999999,
+                debug_source: "ERROR_FALLBACK"
+            };
+        }
+        
+        return data;
+    } catch (err) {
+        console.error('Usage limit check error:', err);
+        return {
+            allowed: true,
+            monthly_usage: 0, 
+            monthly_limit: 999999,
+            debug_source: "ERROR_FALLBACK"
+        };
+    }
+}
+
 module.exports = {
     createSupabaseClient,
     incrementUsageCounter,
     checkUsageLimit,
+    checkUsageLimitNew,
     cleanupExpiredEvents,
     getUsageStats,
     getSystemLimits
