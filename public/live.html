@@ -555,12 +555,20 @@
                 header.innerHTML = `<h3 class="font-semibold">🎧 ${djName}</h3>`;
                 container.appendChild(header);
                 
-                // DJ's songs
-                djSongs.reverse().forEach((song, index) => {
+                // DJ's songs - sort by timestamp according to sortOrder
+                const sortedDjSongs = [...djSongs].sort((a, b) => {
+                    if (sortOrder === 'newest') {
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    } else {
+                        return new Date(a.timestamp) - new Date(b.timestamp);
+                    }
+                });
+                
+                sortedDjSongs.forEach((song, index) => {
                     const key = `${song.title}_${song.artist}_${song.timestamp}`;
                     const songNumber = songNumberMap[key];
                     
-                    // [Now]タグは最新楽曲（最大タイムスタンプ）に付ける
+                    // [Now]タグは全体での最新楽曲（最大タイムスタンプ）に付ける
                     const isNewestSong = song.timestamp === newestSong.timestamp;
                     const songEl = createSongElement(song, isNewestSong, true, songNumber);
                     container.appendChild(songEl);
