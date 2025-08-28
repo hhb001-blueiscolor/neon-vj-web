@@ -522,6 +522,8 @@
                 new Date(song.timestamp) > new Date(newest.timestamp) ? song : newest
             , songList[0]);
             
+            console.log('DEBUG: Newest song for [Now] tag:', newestSong.title, 'by', newestSong.artist, 'timestamp:', newestSong.timestamp);
+            
             // 全楽曲を時系列でソートして通し番号を決定
             const sortedAllSongs = [...songList].sort((a, b) => {
                 if (sortOrder === 'newest') {
@@ -570,6 +572,9 @@
                     
                     // [Now]タグは全体での最新楽曲（最大タイムスタンプ）に付ける
                     const isNewestSong = song.timestamp === newestSong.timestamp;
+                    if (isNewestSong) {
+                        console.log('DEBUG: [Now] tag assigned to:', song.title, 'by', song.artist, 'in DJ group:', djName);
+                    }
                     const songEl = createSongElement(song, isNewestSong, true, songNumber);
                     container.appendChild(songEl);
                 });
