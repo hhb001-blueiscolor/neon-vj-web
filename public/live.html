@@ -471,20 +471,20 @@
             document.getElementById('emptyState').classList.add('hidden');
             
             // Find the newest song from ALL songs (not filtered) for [Now] tag
-            let globalNewestSong = songs[0];
-            let globalNewestTime = new Date(songs[0].timestamp).getTime();
-            let globalNewestId = songs[0].id || 0;
-            
-            songs.forEach(song => {
-                const songTime = new Date(song.timestamp).getTime();
-                const songId = song.id || 0;
-                
-                if (songTime > globalNewestTime || (songTime === globalNewestTime && songId > globalNewestId)) {
-                    globalNewestSong = song;
-                    globalNewestTime = songTime;
-                    globalNewestId = songId;
-                }
-            });
+            let globalNewestSong = null;
+            if (songs && songs.length > 0) {
+                globalNewestSong = songs.reduce((newest, song) => {
+                    const newestTime = new Date(newest.timestamp).getTime();
+                    const songTime = new Date(song.timestamp).getTime();
+                    const newestId = newest.id || 0;
+                    const songId = song.id || 0;
+                    
+                    if (songTime > newestTime || (songTime === newestTime && songId > newestId)) {
+                        return song;
+                    }
+                    return newest;
+                }, songs[0]);
+            }
             
             // Display mode based on event settings
             const displayMode = eventData.dj_display_mode || 'chronological';
@@ -517,7 +517,7 @@
                     : index + 1;
                 
                 // [Now]タグは全体での最新楽曲（ID一致で確実に判定）に付ける
-                const isNewestSong = (song.id === globalNewestSong.id);
+                const isNewestSong = globalNewestSong && (song.id === globalNewestSong.id);
                 const songEl = createSongElement(song, isNewestSong, false, songNumber);
                 container.appendChild(songEl);
             });
@@ -578,7 +578,7 @@
                     const songNumber = songNumberMap[key];
                     
                     // [Now]タグは全体での最新楽曲（ID一致で確実に判定）に付ける
-                    const isNewestSong = (song.id === globalNewestSong.id);
+                    const isNewestSong = globalNewestSong && (song.id === globalNewestSong.id);
                     if (isNewestSong) {
                         console.log('DEBUG: [Now] tag assigned to:', song.title, 'by', song.artist, 'ID:', song.id, 'in DJ group:', djName);
                     }
