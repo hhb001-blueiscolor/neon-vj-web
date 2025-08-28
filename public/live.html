@@ -485,6 +485,11 @@
             const container = document.getElementById('playlistContainer');
             container.innerHTML = '';
             
+            // Find the newest song (highest timestamp) for [Now] tag
+            const newestSong = songList.reduce((newest, song) => 
+                new Date(song.timestamp) > new Date(newest.timestamp) ? song : newest
+            , songList[0]);
+            
             // Sort by timestamp based on sortOrder
             const sortedSongs = [...songList].sort((a, b) => {
                 if (sortOrder === 'newest') {
@@ -499,7 +504,10 @@
                 const songNumber = sortOrder === 'newest' 
                     ? sortedSongs.length - index
                     : index + 1;
-                const songEl = createSongElement(song, index === 0, false, songNumber);
+                
+                // [Now]タグは最新楽曲（最大タイムスタンプ）に付ける
+                const isNewestSong = song.timestamp === newestSong.timestamp;
+                const songEl = createSongElement(song, isNewestSong, false, songNumber);
                 container.appendChild(songEl);
             });
         }
@@ -508,6 +516,11 @@
         function displaySongsGrouped(songList) {
             const container = document.getElementById('playlistContainer');
             container.innerHTML = '';
+            
+            // Find the newest song (highest timestamp) for [Now] tag
+            const newestSong = songList.reduce((newest, song) => 
+                new Date(song.timestamp) > new Date(newest.timestamp) ? song : newest
+            , songList[0]);
             
             // 全楽曲を時系列でソートして通し番号を決定
             const sortedAllSongs = [...songList].sort((a, b) => {
@@ -546,7 +559,10 @@
                 djSongs.reverse().forEach((song, index) => {
                     const key = `${song.title}_${song.artist}_${song.timestamp}`;
                     const songNumber = songNumberMap[key];
-                    const songEl = createSongElement(song, false, true, songNumber);
+                    
+                    // [Now]タグは最新楽曲（最大タイムスタンプ）に付ける
+                    const isNewestSong = song.timestamp === newestSong.timestamp;
+                    const songEl = createSongElement(song, isNewestSong, true, songNumber);
                     container.appendChild(songEl);
                 });
             });
