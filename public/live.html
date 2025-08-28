@@ -582,15 +582,9 @@
             
             // [Now]タグの表示判定: 最新楽曲かつ5分以内
             let nowTag = '';
-            if (isLatest && song.timestamp) {
-                const songTime = new Date(song.timestamp);
-                const now = new Date();
-                const minutesElapsed = (now - songTime) / (1000 * 60);
-                
-                // 5分以内なら[Now]を表示
-                if (minutesElapsed <= 5) {
-                    nowTag = `[${translations[currentLanguage]['now.tag']}]`;
-                }
+            // [Now]タグは最新楽曲に常に表示（時間制限なし）
+            if (isLatest) {
+                nowTag = `[${translations[currentLanguage]['now.tag']}]`;
             }
             
             // 通し番号の表示
