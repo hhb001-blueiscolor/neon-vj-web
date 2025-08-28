@@ -79,13 +79,23 @@
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-6 max-w-2xl">
-        <!-- DJ Filter -->
-        <div class="mb-6">
+        <!-- DJ Filter and Sort Controls -->
+        <div class="mb-6 flex gap-2">
             <select id="djFilter" 
                     onchange="filterByDJ()"
-                    class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white">
+                    class="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white">
                 <option value="all">All DJs</option>
             </select>
+            <!-- Sort Toggle Button -->
+            <button id="sortToggle"
+                    onclick="toggleSortOrder()"
+                    class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white hover:bg-gray-700 transition-colors"
+                    title="Sort order">
+                <!-- Sort icon will be updated dynamically -->
+                <svg id="sortIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
+                </svg>
+            </button>
         </div>
 
         <!-- Event URL (if provided) -->
@@ -267,11 +277,15 @@
         let eventData = null;
         let songs = [];
         let updateTimer = null;
+        let sortOrder = 'newest'; // 'newest' or 'oldest'
         
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             // Initialize language
             initializeLanguage();
+            
+            // Initialize sort icon
+            updateSortIcon();
             
             // Get event ID from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
@@ -471,12 +485,20 @@
             const container = document.getElementById('playlistContainer');
             container.innerHTML = '';
             
-            // Sort by timestamp (newest first)
-            const sortedSongs = [...songList].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            // Sort by timestamp based on sortOrder
+            const sortedSongs = [...songList].sort((a, b) => {
+                if (sortOrder === 'newest') {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                } else {
+                    return new Date(a.timestamp) - new Date(b.timestamp);
+                }
+            });
             
             sortedSongs.forEach((song, index) => {
                 // 通し番号は全楽曲数から逆算（新しいほど大きい番号）
-                const songNumber = sortedSongs.length - index;
+                const songNumber = sortOrder === 'newest' 
+                    ? sortedSongs.length - index
+                    : index + 1;
                 const songEl = createSongElement(song, index === 0, false, songNumber);
                 container.appendChild(songEl);
             });
@@ -488,11 +510,19 @@
             container.innerHTML = '';
             
             // 全楽曲を時系列でソートして通し番号を決定
-            const sortedAllSongs = [...songList].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const sortedAllSongs = [...songList].sort((a, b) => {
+                if (sortOrder === 'newest') {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                } else {
+                    return new Date(a.timestamp) - new Date(b.timestamp);
+                }
+            });
             const songNumberMap = {};
             sortedAllSongs.forEach((song, index) => {
                 const key = `${song.title}_${song.artist}_${song.timestamp}`;
-                songNumberMap[key] = index + 1;
+                songNumberMap[key] = sortOrder === 'newest'
+                    ? sortedAllSongs.length - index
+                    : index + 1;
             });
             
             // Group songs by DJ
@@ -560,6 +590,25 @@
         // Filter by DJ
         function filterByDJ() {
             displaySongs();
+        }
+        
+        // Toggle sort order
+        function toggleSortOrder() {
+            sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest';
+            updateSortIcon();
+            displaySongs();
+        }
+        
+        // Update sort icon
+        function updateSortIcon() {
+            const icon = document.getElementById('sortIcon');
+            if (sortOrder === 'newest') {
+                // Arrow down (newest first)
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>';
+            } else {
+                // Arrow up (oldest first)
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>';
+            }
         }
         
         // Share event
