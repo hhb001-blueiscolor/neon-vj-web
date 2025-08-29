@@ -79,6 +79,18 @@
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-6 max-w-2xl">
+        <!-- DJ Name Display Toggle (above filter controls) -->
+        <div class="mb-2 flex justify-end">
+            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white transition-colors">
+                <span id="djDisplayLabel">DJ名の表示</span>
+                <input type="checkbox" 
+                       id="djNameToggle"
+                       checked
+                       onchange="toggleDJNameDisplay()"
+                       class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2">
+            </label>
+        </div>
+        
         <!-- DJ Filter and Sort Controls -->
         <div class="mb-6 flex gap-2">
             <select id="djFilter" 
@@ -159,7 +171,8 @@
                 'notice.deletion': '🗓️ このページは30日後に自動削除されます',
                 'footer.powered': 'Powered by NeoN VJ',
                 'now.tag': 'Now',
-                'songs.count': '曲'
+                'songs.count': '曲',
+                'djname.display': 'DJ名の表示'
             },
             'en': {
                 'share.button': 'Share',
@@ -174,7 +187,8 @@
                 'notice.deletion': '🗓️ This page will be automatically deleted after 30 days',
                 'footer.powered': 'Powered by NeoN VJ',
                 'now.tag': 'Now',
-                'songs.count': 'songs'
+                'songs.count': 'songs',
+                'djname.display': 'Show DJ names'
             },
             'zh-Hans': {
                 'share.button': '分享',
@@ -189,7 +203,8 @@
                 'notice.deletion': '🗓️ 此页面将在30天后自动删除',
                 'footer.powered': '由 NeoN VJ 提供支持',
                 'now.tag': 'Now',
-                'songs.count': '首歌曲'
+                'songs.count': '首歌曲',
+                'djname.display': '显示DJ名称'
             },
             'zh-Hant': {
                 'share.button': '分享',
@@ -204,7 +219,8 @@
                 'notice.deletion': '🗓️ 此頁面將在30天後自動刪除',
                 'footer.powered': '由 NeoN VJ 提供支援',
                 'now.tag': 'Now',
-                'songs.count': '首歌曲'
+                'songs.count': '首歌曲',
+                'djname.display': '顯示DJ名稱'
             },
             'ko': {
                 'share.button': '공유',
@@ -219,7 +235,8 @@
                 'notice.deletion': '🗓️ 이 페이지는 30일 후 자동으로 삭제됩니다',
                 'footer.powered': 'Powered by NeoN VJ',
                 'now.tag': 'Now',
-                'songs.count': '곡'
+                'songs.count': '곡',
+                'djname.display': 'DJ 이름 표시'
             },
             'fr': {
                 'share.button': 'Partager',
@@ -234,7 +251,8 @@
                 'notice.deletion': '🗓️ Cette page sera automatiquement supprimée après 30 jours',
                 'footer.powered': 'Propulsé par NeoN VJ',
                 'now.tag': 'Now',
-                'songs.count': 'chansons'
+                'songs.count': 'chansons',
+                'djname.display': 'Afficher les noms des DJ'
             },
             'es': {
                 'share.button': 'Compartir',
@@ -249,7 +267,8 @@
                 'notice.deletion': '🗓️ Esta página se eliminará automáticamente después de 30 días',
                 'footer.powered': 'Desarrollado por NeoN VJ',
                 'now.tag': 'Now',
-                'songs.count': 'canciones'
+                'songs.count': 'canciones',
+                'djname.display': 'Mostrar nombres de DJ'
             },
             'th': {
                 'share.button': 'แชร์',
@@ -264,7 +283,8 @@
                 'notice.deletion': '🗓️ หน้านี้จะถูกลบโดยอัตโนมัติหลังจาก 30 วัน',
                 'footer.powered': 'ขับเคลื่อนโดย NeoN VJ',
                 'now.tag': 'Now',
-                'songs.count': 'เพลง'
+                'songs.count': 'เพลง',
+                'djname.display': 'แสดงชื่อ DJ'
             }
         };
 
@@ -278,11 +298,15 @@
         let songs = [];
         let updateTimer = null;
         let sortOrder = 'newest'; // 'newest' or 'oldest'
+        let showDJNames = localStorage.getItem('neon-vj-show-dj-names') !== 'false'; // Default true
         
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             // Initialize language
             initializeLanguage();
+            
+            // Initialize DJ name toggle
+            initializeDJNameToggle();
             
             // Initialize sort icon
             updateSortIcon();
@@ -330,9 +354,41 @@
             }
         }
 
+        // Initialize DJ name toggle
+        function initializeDJNameToggle() {
+            const toggle = document.getElementById('djNameToggle');
+            if (toggle) {
+                toggle.checked = showDJNames;
+            }
+            updateDJNameLabel();
+        }
+        
+        // Toggle DJ name display
+        function toggleDJNameDisplay() {
+            const toggle = document.getElementById('djNameToggle');
+            showDJNames = toggle.checked;
+            localStorage.setItem('neon-vj-show-dj-names', showDJNames.toString());
+            
+            // Re-render the playlist with the new setting
+            if (songs.length > 0) {
+                displaySongs();
+            }
+        }
+        
+        // Update DJ name label based on language
+        function updateDJNameLabel() {
+            const label = document.getElementById('djDisplayLabel');
+            if (label) {
+                label.textContent = translations[currentLanguage]['djname.display'];
+            }
+        }
+        
         // Update static translations
         function updateStaticTranslations() {
             const t = translations[currentLanguage];
+            
+            // Update DJ name display label
+            updateDJNameLabel();
             
             // Update share button
             const shareButton = document.getElementById('shareButton');
@@ -596,8 +652,9 @@
             const div = document.createElement('div');
             div.className = `bg-gray-800/50 rounded-lg p-4 ${isLatest ? 'border border-purple-500 fade-in' : ''}`;
             
-            // DJ名の表示判定: 空文字、"DJ"のみ、hideDJフラグをチェック
-            const shouldHideDJ = hideDJ || 
+            // DJ名の表示判定: チェックボックス状態、空文字、"DJ"のみ、hideDJフラグをチェック
+            const shouldHideDJ = !showDJNames || 
+                                hideDJ || 
                                 !song.dj_name || 
                                 song.dj_name.trim() === '' || 
                                 song.dj_name.trim() === 'DJ';
